@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Catalogo Web LimpMix Pitanga</title>
+    <meta
+      name="description"
+      content="Catalogo online LimpMix Pitanga com produtos, categorias, orcamento e pedido via WhatsApp."
+    />
+    <meta name="theme-color" content="#003487" />
+    <link rel="icon" href="assets/icons/ico.ico" type="image/x-icon" />
+    <meta property="og:title" content="Catalogo Web LimpMix Pitanga" />
+    <meta
+      property="og:description"
+      content="Produtos de limpeza para cada momento, atendimento com carinho e entrega rapida em Pitanga."
+    />
+    <meta property="og:image" content="assets/images/preview-catalogo-limpmix.png" />
+    <link rel="stylesheet" href="styles/main.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <section class="promise-bar" aria-label="Diferenciais da loja">
+        <div class="promise-item">
+          <span class="mini-icon" aria-hidden="true">E</span>
+          <strong>Entrega rapida em Pitanga</strong>
+        </div>
+        <div class="promise-item">
+          <span class="mini-icon" aria-hidden="true">Q</span>
+          <strong>Qualidade que faz a diferenca</strong>
+        </div>
+        <div class="promise-item">
+          <span class="mini-icon" aria-hidden="true">A</span>
+          <strong>Atendimento com carinho</strong>
+        </div>
+      </section>
+
+      <section class="brand-row" aria-label="Cabecalho">
+        <a class="brand" href="#catalogo" aria-label="Ir para o catalogo LimpMix">
+          <img src="assets/images/logo-limpmix.png" alt="LimpMix Pitanga" />
+        </a>
+
+        <div class="contact-list">
+          <a class="contact-card" href="https://wa.me/5542988859972" target="_blank" rel="noopener">
+            <span class="round-icon" aria-hidden="true">W</span>
+            <span>
+              <small>WhatsApp</small>
+              <strong>(42) 9 8885-9972</strong>
+            </span>
+          </a>
+          <address class="contact-card">
+            <span class="round-icon pin" aria-hidden="true">P</span>
+            <span>
+              <small>Endereco</small>
+              <strong>Rua Doutor Joao Goncalves Padilha, 510</strong>
+              <em>Pitanga/PR</em>
+            </span>
+          </address>
+        </div>
+
+        <div class="account-card" aria-label="Acesso">
+          <span class="user-icon" aria-hidden="true"></span>
+          <strong id="sessionLabel">PUBLICO</strong>
+          <div class="account-actions">
+            <button id="openLogin" type="button">Entrar</button>
+            <button id="logoutButton" type="button" hidden>Sair</button>
+          </div>
+        </div>
+      </section>
+    </header>
+
+    <main>
+      <section class="hero" aria-label="Produtos de limpeza para cada momento">
+        <img src="assets/images/hero-limpmix-4k.png" alt="Produtos de limpeza para cada momento" />
+      </section>
+
+      <nav class="catalog-toolbar" aria-label="Busca e atalhos">
+        <div class="toolbar-inner">
+          <button
+            class="category-button"
+            id="toggleCategories"
+            type="button"
+            aria-controls="categoryPanel"
+            aria-expanded="false"
+          >
+            <span class="hamburger" aria-hidden="true"></span>
+            <span id="activeCategoryButton">Todas as categorias</span>
+          </button>
+
+          <label class="search-box">
+            <span class="sr-only">Buscar produtos</span>
+            <input id="searchInput" type="search" placeholder="Buscar produtos..." autocomplete="off" />
+            <span class="search-mark" aria-hidden="true"></span>
+          </label>
+
+          <a class="whatsapp-button" href="https://wa.me/5542988859972" target="_blank" rel="noopener">
+            <span aria-hidden="true">W</span>
+            Fale no WhatsApp
+          </a>
+
+          <aside class="category-menu" id="categoryPanel" aria-label="Categorias">
+            <div class="sidebar-title">
+              <h2>Categorias</h2>
+              <button id="closeCategories" type="button" aria-label="Fechar categorias">x</button>
+            </div>
+            <label class="category-search">
+              <span class="sr-only">Pesquisar categoria</span>
+              <input
+                id="categorySearchInput"
+                type="search"
+                placeholder="Pesquisar categoria..."
+                autocomplete="off"
+              />
+              <span class="search-mark" aria-hidden="true"></span>
+            </label>
+            <div class="category-list" id="categoryList"></div>
+            <p class="category-empty" id="categoryEmpty" hidden>Nenhuma categoria encontrada.</p>
+          </aside>
+        </div>
+      </nav>
+
+      <div class="catalog-shell" id="catalogo">
+        <section class="products-area" aria-labelledby="productsTitle">
+          <div class="status-line" id="statusLine">Carregando catalogo...</div>
+
+          <section class="admin-panel" id="featuredAdmin" hidden>
+            <div>
+              <h2>Destaques</h2>
+              <p>Informe os codigos/SKUs em ordem. Separe por virgula, ponto e virgula, espaco ou quebra de linha.</p>
+            </div>
+            <label>
+              <span>SKUs em destaque</span>
+              <textarea id="featuredInput" rows="3" placeholder="819, 645, 1393"></textarea>
+            </label>
+            <div class="admin-actions">
+              <button class="primary-button" id="saveFeatured" type="button">Salvar destaques</button>
+              <button class="ghost-button" id="clearFeatured" type="button">Limpar</button>
+              <span id="featuredFeedback" role="status"></span>
+            </div>
+          </section>
+
+          <div class="section-head">
+            <div>
+              <h1 id="productsTitle">Destaques</h1>
+              <p id="resultSummary">Nenhum produto carregado.</p>
+            </div>
+
+            <div class="view-tools">
+              <button class="refresh" id="refreshProducts" type="button">Atualizar</button>
+              <div class="master-stats" id="masterStats" hidden>
+                <strong id="visibleProducts">0</strong>
+                <span>produtos</span>
+                <strong id="visibleStock">0</strong>
+                <span>em estoque</span>
+              </div>
+              <div class="view-box">
+                <small>Visualizacao</small>
+                <div class="segment" role="group" aria-label="Modo de visualizacao">
+                  <button type="button" data-view="list">Lista</button>
+                  <button type="button" data-view="medium">Medio</button>
+                  <button type="button" data-view="large">Grande</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <section class="product-grid view-medium" id="productGrid" aria-live="polite"></section>
+          <p class="empty-state" id="emptyState" hidden>Nenhum produto encontrado para este filtro.</p>
+        </section>
+      </div>
+
+      <section class="benefits" aria-label="Beneficios">
+        <article>
+          <span class="benefit-icon" aria-hidden="true">W</span>
+          <div>
+            <strong>Atendimento com carinho</strong>
+            <p>Aqui voce e mais que um cliente!</p>
+          </div>
+        </article>
+        <article>
+          <span class="benefit-icon shield" aria-hidden="true">OK</span>
+          <div>
+            <strong>Qualidade que faz a diferenca</strong>
+            <p>Produtos testados e aprovados por voce.</p>
+          </div>
+        </article>
+        <article>
+          <span class="benefit-icon truck" aria-hidden="true">E</span>
+          <div>
+            <strong>Entrega rapida em Pitanga</strong>
+            <p>Receba no conforto da sua casa.</p>
+          </div>
+        </article>
+        <article>
+          <span class="benefit-icon card" aria-hidden="true">R$</span>
+          <div>
+            <strong>Precos justos e acessiveis</strong>
+            <p>Qualidade que cabe no seu bolso!</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="social-callout" aria-label="Pedido via WhatsApp e Instagram">
+        <img
+          src="assets/images/cta-whatsapp-instagram-4k.png"
+          alt="Faca seu pedido via WhatsApp e siga-nos no Instagram"
+        />
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <a class="footer-brand" href="#catalogo">
+          <img src="assets/images/footer-logo.png" alt="LimpMix Pitanga" />
+        </a>
+        <section>
+          <h2>Links Uteis</h2>
+          <a href="#catalogo">Todos os produtos</a>
+          <a href="#categoryPanel">Categorias</a>
+          <a href="https://wa.me/5542988859972" target="_blank" rel="noopener">Fale conosco</a>
+        </section>
+        <section>
+          <h2>Informacoes</h2>
+          <p>Rua Doutor Joao Goncalves Padilha, 510<br />Pitanga/PR</p>
+          <p>(42) 9 8885-9972</p>
+          <p>limpmixpitanga@gmail.com</p>
+        </section>
+        <section>
+          <h2>Formas de pagamento</h2>
+          <div class="payment-list" aria-label="Formas de pagamento">
+            <span>pix</span>
+            <span>Visa</span>
+            <span>Master</span>
+            <span>Cartao</span>
+          </div>
+        </section>
+      </div>
+      <p class="copyright">&copy; 2024 LimpMix Pitanga. Todos os direitos reservados.</p>
+    </footer>
+
+    <aside class="quote-panel minimized" id="quotePanel" aria-label="Carrinho de orcamento">
+      <button class="quote-toggle" id="quoteToggle" type="button" aria-expanded="false">
+        <span class="cart-symbol" aria-hidden="true"></span>
+        <span>
+          <strong>Carrinho <b id="quoteCount">0</b></strong>
+          <small id="quoteTotalPreview">R$ 0,00</small>
+        </span>
+      </button>
+      <div class="quote-body">
+        <div class="quote-head">
+          <div>
+            <h2>Seu orcamento</h2>
+            <p id="quoteHint">Adicione produtos para montar seu pedido.</p>
+          </div>
+          <button id="minimizeQuote" type="button" aria-label="Minimizar carrinho">x</button>
+        </div>
+        <div class="quote-items" id="quoteItems"></div>
+        <div class="quote-total" id="quoteTotalRow" hidden>
+          <span>Total estimado</span>
+          <strong id="quoteTotal">R$ 0,00</strong>
+        </div>
+        <div class="quote-actions">
+          <button class="primary-button" id="sendWhatsApp" type="button">Enviar pelo WhatsApp</button>
+          <button class="ghost-button" id="clearQuote" type="button">Limpar</button>
+        </div>
+      </div>
+    </aside>
+
+    <dialog class="login-dialog" id="loginDialog">
+      <form id="loginForm" method="dialog">
+        <div class="dialog-head">
+          <div>
+            <h2>Acesso LimpMix</h2>
+            <p>Entre como VENDEDOR ou MASTER para visualizar valores.</p>
+          </div>
+          <button id="closeLogin" type="button" aria-label="Fechar login">x</button>
+        </div>
+        <label>
+          <span>Usuario</span>
+          <input id="loginUser" autocomplete="username" placeholder="VENDEDOR" />
+        </label>
+        <label>
+          <span>Senha</span>
+          <input id="loginPass" type="password" autocomplete="current-password" placeholder="Senha" />
+        </label>
+        <p class="login-feedback" id="loginFeedback" role="status"></p>
+        <div class="dialog-actions">
+          <button class="primary-button" type="submit">Entrar</button>
+          <button class="ghost-button" id="cancelLogin" type="button">Cancelar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

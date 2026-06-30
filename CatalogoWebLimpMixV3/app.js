@@ -9,6 +9,13 @@ const SHEET_CSV_URLS = [
   ),
 ];
 
+const FEATURED_SHEET_ID = "1k05qem3bXQeRhETCI83OumPtTAf1uD1PckX-rWYFwhs";
+const FEATURED_SHEET_NAME = "Destaques";
+const FEATURED_SHEET_CSV_URL =
+  `https://docs.google.com/spreadsheets/d/${FEATURED_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(FEATURED_SHEET_NAME)}`;
+const FEATURED_API_URL =
+  "https://script.google.com/macros/s/AKfycbztQmF0-dlPl96nx69ZTb4DO5_apyNito9u4yGzATmFIPVtYWcuUexjFrrXL7-kUAQ/exec";
+
 const WHATSAPP_PHONE = "5542988859972";
 
 const USERS = {
@@ -153,6 +160,7 @@ function init() {
   applyView(state.view);
   renderAuth();
   loadProducts();
+  loadFeaturedSkus();
 }
 
 function bindEvents() {
@@ -626,7 +634,7 @@ function canSeePrices() {
   return state.role === "MASTER" || state.role === "VENDEDOR";
 }
 
-function saveFeatured() {
+async function saveFeatured() {
   const requested = parseSkuList(els.featuredInput.value);
   const availableSkus = new Set(state.products.map((product) => normalizeSku(product.code)));
 
@@ -636,22 +644,115 @@ function saveFeatured() {
   buildCategories();
   applyFilters();
 
-  const saved = state.featuredSkus.length;
-  const pending = state.featuredSkus.filter((sku) => !availableSkus.has(sku));
-  els.featuredFeedback.textContent = pending.length
-    ? `${saved} SKU(s) salvo(s). ${pending.length} ainda nao esta(ao) disponivel(is) no catalogo atual.`
-    : `${saved} SKU(s) salvo(s) em Destaques.`;
-  showToast("Destaques atualizados.");
+  els.saveFeatured.disabled = true;
+  els.clearFeatured.disabled = true;
+  els.featuredFeedback.textContent = "Salvando na planilha...";
+
+  try {
+    await writeFeaturedSkus(state.featuredSkus);
+    const saved = state.featuredSkus.length;
+    const pending = state.featuredSkus.filter((sku) => !availableSkus.has(sku));
+    els.featuredFeedback.textContent = pending.length
+      ? `${saved} SKU(s) salvo(s) na planilha. ${pending.length} ainda nao esta(ao) disponivel(is) no catalogo atual.`
+      : `${saved} SKU(s) salvo(s) na planilha Destaques.`;
+    showToast("Destaques atualizados para todos os dispositivos.");
+  } catch (error) {
+    els.featuredFeedback.textContent =
+      `Nao foi possivel salvar na planilha. A copia local foi mantida. Detalhe: ${error.message}`;
+    showToast("Falha ao sincronizar os destaques.");
+  } finally {
+    els.saveFeatured.disabled = false;
+    els.clearFeatured.disabled = false;
+  }
 }
 
-function clearFeatured() {
+async function clearFeatured() {
   state.featuredSkus = [];
   persistFeaturedSkus();
   els.featuredInput.value = "";
-  els.featuredFeedback.textContent = "Destaques limpos.";
   applyFeaturedFlags();
   buildCategories();
   applyFilters();
+
+  els.saveFeatured.disabled = true;
+  els.clearFeatured.disabled = true;
+  els.featuredFeedback.textContent = "Limpando destaques na planilha...";
+
+  try {
+    await writeFeaturedSkus([]);
+    els.featuredFeedback.textContent = "Destaques limpos na planilha.";
+    showToast("Destaques removidos para todos os dispositivos.");
+  } catch (error) {
+    els.featuredFeedback.textContent =
+      `Nao foi possivel limpar a planilha. A copia local foi atualizada. Detalhe: ${error.message}`;
+    showToast("Falha ao sincronizar os destaques.");
+  } finally {
+    els.saveFeatured.disabled = false;
+    els.clearFeatured.disabled = false;
+  }
+}
+
+async function loadFeaturedSkus() {
+  try {
+    const skus = await fetchFeaturedSkus();
+    state.featuredSkus = skus;
+    persistFeaturedSkus();
+    applyFeaturedFlags();
+    buildCategories();
+    applyFilters();
+    renderAuth();
+  } catch (error) {
+    if (state.role === "MASTER") {
+      els.featuredFeedback.textContent =
+        `Destaques carregados da copia local. Nao foi possivel consultar a planilha: ${error.message}`;
+    }
+  }
+}
+
+async function fetchFeaturedSkus() {
+  const requestUrl = new URL(FEATURED_SHEET_CSV_URL);
+  requestUrl.searchParams.set("t", Date.now());
+  const response = await fetch(requestUrl, { cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+  const csv = await response.text();
+  if (!csv.trim()) return [];
+  if (/^\s*</.test(csv)) throw new Error("a planilha nao esta disponivel como CSV publico");
+
+  const rows = parseCsv(csv);
+  if (!rows.length) return [];
+
+  const headers = rows[0].map(headerKey);
+  const skuColumn = headers.findIndex((header) =>
+    ["SKU", "CODIGO", "CODIGO PRODUTO", "DESTAQUE"].includes(header)
+  );
+  const startRow = skuColumn >= 0 ? 1 : 0;
+  const column = skuColumn >= 0 ? skuColumn : 0;
+  return parseSkuList(rows.slice(startRow).map((row) => row[column]).join(","));
+}
+
+async function writeFeaturedSkus(skus) {
+  if (!FEATURED_API_URL || FEATURED_API_URL.includes("__FEATURED_API_URL__")) {
+    throw new Error("endpoint de gravacao ainda nao configurado");
+  }
+
+  const response = await fetch(FEATURED_API_URL, {
+    method: "POST",
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "replace", skus }),
+  });
+
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const result = await response.json();
+  if (!result.ok) throw new Error(result.error || "resposta invalida do servidor");
+
+  const savedSkus = Array.isArray(result.skus)
+    ? result.skus.map(normalizeSku).filter(Boolean)
+    : skus;
+  if (savedSkus.join("|") !== skus.join("|")) {
+    throw new Error("a planilha retornou uma lista diferente da solicitada");
+  }
 }
 
 function persistFeaturedSkus() {
@@ -946,3 +1047,4 @@ function showToast(message) {
     els.toast.classList.remove("show");
   }, 2400);
 }
+
